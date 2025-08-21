@@ -52,6 +52,12 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Bakery-specific colors
+				golden: 'hsl(var(--golden))',
+				'golden-light': 'hsl(var(--golden-light))',
+				'warm-cream': 'hsl(var(--warm-cream))',
+				'coffee-brown': 'hsl(var(--coffee-brown))',
+				honey: 'hsl(var(--honey))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
