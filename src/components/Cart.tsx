@@ -1,9 +1,11 @@
+import { useNavigate } from "react-router-dom";
 import { Minus, Plus, X, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "./ProductCard";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface CartItem extends Product {
   quantity: number;
@@ -18,8 +20,22 @@ interface CartProps {
 }
 
 export const Cart = ({ items, onUpdateQuantity, onRemoveItem, onClose, isOpen }: CartProps) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleCheckout = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    
+    // Save cart to localStorage for checkout page
+    localStorage.setItem("cartItems", JSON.stringify(items));
+    navigate("/checkout");
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -122,8 +138,13 @@ export const Cart = ({ items, onUpdateQuantity, onRemoveItem, onClose, isOpen }:
                 </div>
               </div>
               
-              <Button variant="hero" className="w-full mt-6" size="lg">
-                Proceed to Checkout
+              <Button 
+                variant="hero" 
+                className="w-full mt-6" 
+                size="lg"
+                onClick={handleCheckout}
+              >
+                {user ? "Proceed to Checkout" : "Sign In to Checkout"}
               </Button>
             </div>
           )}

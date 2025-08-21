@@ -1,6 +1,8 @@
-import { ShoppingCart, User, Menu } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ShoppingCart, User, Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavbarProps {
   cartItemCount: number;
@@ -8,6 +10,7 @@ interface NavbarProps {
 }
 
 export const Navbar = ({ cartItemCount, onCartClick }: NavbarProps) => {
+  const { user, signOut } = useAuth();
   return (
     <nav className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -33,9 +36,22 @@ export const Navbar = ({ cartItemCount, onCartClick }: NavbarProps) => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="icon" className="relative">
-            <User className="h-5 w-5" />
-          </Button>
+          {user ? (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={signOut}
+              title="Sign Out"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" asChild>
+              <Link to="/auth" title="Sign In">
+                <User className="h-5 w-5" />
+              </Link>
+            </Button>
+          )}
           
           <Button 
             variant="ghost" 

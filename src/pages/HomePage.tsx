@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
 import { ProductCard, Product } from "@/components/ProductCard";
@@ -6,59 +6,56 @@ import { Cart, CartItem } from "@/components/Cart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-// Import product images
-import cookiesImg from "@/assets/cookies.jpg";
-import breadImg from "@/assets/bread.jpg";
-import muffinsImg from "@/assets/muffins.jpg";
-import cakeImg from "@/assets/cake.jpg";
-
-const products: Product[] = [
-  {
-    id: "1",
-    name: "Chocolate Chip Cookies",
-    description: "Warm, gooey chocolate chip cookies made with premium Belgian chocolate and organic flour.",
-    price: 12.99,
-    image: cookiesImg,
-    category: "Cookies",
-    isNew: true,
-    rating: 4.9
-  },
-  {
-    id: "2",
-    name: "Artisan Sourdough Bread",
-    description: "Traditional sourdough with a crispy crust and tender, tangy interior. 48-hour fermentation process.",
-    price: 8.99,
-    image: breadImg,
-    category: "Bread",
-    rating: 4.8
-  },
-  {
-    id: "3",
-    name: "Blueberry Muffins",
-    description: "Fluffy muffins bursting with fresh Maine blueberries and a hint of lemon zest.",
-    price: 15.99,
-    image: muffinsImg,
-    category: "Muffins",
-    rating: 4.7
-  },
-  {
-    id: "4",
-    name: "Chocolate Layer Cake",
-    description: "Decadent three-layer chocolate cake with rich buttercream frosting. Perfect for celebrations.",
-    price: 45.99,
-    image: cakeImg,
-    category: "Cakes",
-    isNew: true,
-    rating: 5.0
-  },
-];
 
 export const HomePage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Fetch products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("is_available", true)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        // Transform the data to match our Product interface
+        const transformedProducts: Product[] = data.map((product) => ({
+          id: product.id,
+          name: product.name,
+          description: product.description || "",
+          price: parseFloat(product.price.toString()),
+          image: product.image_url || "",
+          category: product.category,
+          isNew: product.is_new || false,
+          rating: parseFloat(product.rating.toString()) || 0,
+        }));
+
+        setProducts(transformedProducts);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        toast({
+          title: "Error loading products",
+          description: "Failed to load products. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [toast]);
 
   const categories = ["All", ...Array.from(new Set(products.map(p => p.category)))];
 
@@ -143,15 +140,27 @@ export const HomePage = () => {
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={addToCart}
-                />
-              ))}
-            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-muted h-64 rounded-lg mb-4"></div>
+                    <div className="h-4 bg-muted rounded mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={addToCart}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
